@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APTA IMOB — Portal de Empreendimentos</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@300;400;500&family=Playfair+Display:wght@400;600&family=Lato:wght@300;400;700&family=Montserrat:wght@300;400;500&family=Raleway:wght@300;400;500&family=Merriweather:wght@300;400;700&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --bg:          #E8E2D8;
+  --card-bg:     #FFFFFF;
+  --accent:      #9A7B4F;
+  --accent-pale: #F0E8D8;
+  --header-bg:   #1C1A17;
+  --header-text: #FAF8F4;
+  --text:        #1C1A17;
+  --text-mid:    #5C5650;
+  --text-light:  #9C9690;
+  --border:      #D4CCC0;
+  --radius:      14px;
+  --body-font:   'Inter', sans-serif;
+  --title-font:  'Cormorant Garamond', serif;
+  --card-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  --header-pad:  36px;
+  --page-pad:    36px;
+  --card-pad:    20px;
+  --card-gap:    14px;
+}
+
+body { background:var(--bg); color:var(--text); font-family:var(--body-font); min-height:100vh; }
+
+.header { background:var(--header-bg); padding:var(--header-pad) 24px; text-align:center; position:relative; overflow:hidden; }
+.header::after { content:''; position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:60px; height:2px; background:var(--accent); }
+.logo { font-family:var(--title-font); font-size:30px; font-weight:600; letter-spacing:6px; color:var(--header-text); text-transform:uppercase; margin-bottom:6px; }
+.tagline { font-size:10px; letter-spacing:3px; color:var(--accent); text-transform:uppercase; }
+
+.main { max-width:520px; margin:0 auto; padding:var(--page-pad) 20px 80px; }
+
+.breadcrumb { display:flex; align-items:center; flex-wrap:wrap; gap:6px; font-size:12px; color:var(--text-light); margin-bottom:28px; min-height:18px; }
+.bc-link { color:var(--accent); cursor:pointer; font-weight:500; }
+.bc-sep { color:var(--border); }
+.bc-current { color:var(--text-mid); }
+
+.screen { display:none; }
+.screen.active { display:block; animation:fadeUp .28s ease forwards; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+.section-header { margin-bottom:24px; }
+.section-label { font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(--text-light); margin-bottom:6px; }
+.section-title { font-family:var(--title-font); font-size:26px; font-weight:500; color:var(--text); line-height:1.2; }
+
+.builder-card { background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:var(--card-gap); cursor:pointer; transition:box-shadow .2s,border-color .2s,transform .15s; overflow:hidden; display:flex; align-items:stretch; box-shadow:var(--card-shadow); }
+.builder-card:hover { border-color:var(--accent); box-shadow:0 6px 24px rgba(0,0,0,.13); transform:translateY(-2px); }
+.builder-accent { width:5px; background:var(--accent-pale); flex-shrink:0; transition:background .2s; }
+.builder-card:hover .builder-accent { background:var(--accent); }
+.builder-body { flex:1; padding:var(--card-pad) var(--card-pad) var(--card-pad) 22px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.builder-name { font-family:var(--title-font); font-size:20px; font-weight:500; color:var(--text); margin-bottom:3px; }
+.builder-count { font-size:12px; color:var(--text-light); }
+.builder-arrow { width:34px; height:34px; border-radius:50%; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--accent); font-size:16px; flex-shrink:0; transition:background .2s,border-color .2s; }
+.builder-card:hover .builder-arrow { background:var(--accent); border-color:var(--accent); color:white; }
+
+.emp-card { background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius); padding:var(--card-pad); margin-bottom:var(--card-gap); cursor:pointer; transition:box-shadow .2s,border-color .2s,transform .15s; display:flex; align-items:center; justify-content:space-between; gap:12px; box-shadow:var(--card-shadow); }
+.emp-card:hover { border-color:var(--accent); box-shadow:0 4px 18px rgba(0,0,0,.11); transform:translateY(-2px); }
+.emp-info { flex:1; }
+.emp-name { font-family:var(--title-font); font-size:19px; font-weight:500; color:var(--text); margin-bottom:4px; }
+.emp-tags { display:flex; gap:8px; flex-wrap:wrap; }
+.tag { font-size:11px; color:var(--text-mid); background:var(--bg); border:1px solid var(--border); border-radius:20px; padding:2px 10px; }
+.emp-arrow { color:var(--accent); font-size:20px; opacity:.5; transition:opacity .2s,transform .2s; flex-shrink:0; }
+.emp-card:hover .emp-arrow { opacity:1; transform:translateX(4px); }
+
+.links-grid { display:flex; flex-direction:column; gap:var(--card-gap); }
+.link-card { background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius); padding:var(--card-pad); display:flex; align-items:center; gap:16px; text-decoration:none; transition:box-shadow .2s,border-color .2s,transform .15s; box-shadow:var(--card-shadow); }
+.link-card:hover { border-color:var(--accent); box-shadow:0 4px 16px rgba(0,0,0,.11); transform:translateY(-2px); }
+.link-icon-wrap { width:44px; height:44px; background:var(--accent-pale); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+.link-info { flex:1; }
+.link-name { font-size:14px; font-weight:500; color:var(--text); margin-bottom:2px; }
+.link-desc { font-size:12px; color:var(--text-light); }
+.link-ext { font-size:13px; color:var(--text-light); opacity:.6; flex-shrink:0; }
+.link-card:hover .link-ext { opacity:1; color:var(--accent); }
+
+/* ── EDITOR ── */
+#editor-toggle {
+  position:fixed; bottom:24px; right:24px; z-index:1000;
+  background:var(--accent); color:white; border:none; border-radius:50px;
+  padding:12px 20px; font-family:'Inter',sans-serif; font-size:13px; font-weight:500;
+  cursor:pointer; box-shadow:0 4px 16px rgba(0,0,0,.25);
+  display:flex; align-items:center; gap:8px; transition:background .2s,transform .15s;
+}
+#editor-toggle:hover { background:#7A5F38; transform:translateY(-2px); }
+
+#editor-panel {
+  position:fixed; top:0; right:-360px; width:340px; height:100vh;
+  background:#FDFCFA; border-left:1px solid #E0D8CC;
+  box-shadow:-4px 0 24px rgba(0,0,0,.12); z-index:999; overflow-y:auto;
+  transition:right .3s cubic-bezier(.4,0,.2,1); font-family:'Inter',sans-serif;
+  display:flex; flex-direction:column;
+}
+#editor-panel.open { right:0; }
+
+.ep-head { background:#1C1A17; padding:18px 16px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+.ep-head h2 { font-size:12px; font-weight:500; letter-spacing:2px; text-transform:uppercase; color:#FAF8F4; }
+.ep-close { background:none; border:none; color:#9C9690; font-size:20px; cursor:pointer; }
+.ep-close:hover { color:white; }
+
+/* Tabs */
+.ep-tabs { display:flex; border-bottom:1px solid #E8E2D8; flex-shrink:0; background:#FAF8F4; }
+.ep-tab { flex:1; padding:10px 4px; font-size:11px; font-weight:500; color:#9C9690; text-align:center; cursor:pointer; border-bottom:2px solid transparent; transition:all .2s; letter-spacing:.5px; text-transform:uppercase; background:none; border-top:none; border-left:none; border-right:none; font-family:'Inter',sans-serif; }
+.ep-tab:hover { color:#5C5650; }
+.ep-tab.active { color:#9A7B4F; border-bottom-color:#9A7B4F; }
+
+.ep-body { padding:16px; flex:1; }
+.ep-pane { display:none; }
+.ep-pane.active { display:block; }
+
+.ep-section { margin-bottom:20px; }
+.ep-section-title { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:#9C9690; margin-bottom:12px; padding-bottom:6px; border-bottom:1px solid #E8E2D8; }
+
+.ep-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; gap:10px; }
+.ep-label { font-size:12px; color:#5C5650; white-space:nowrap; min-width:90px; }
+.ep-row input[type="color"] { width:36px; height:28px; border:1px solid #D4CCC0; border-radius:6px; cursor:pointer; padding:2px; background:white; }
+.ep-row input[type="range"] { flex:1; height:4px; accent-color:#9A7B4F; cursor:pointer; }
+.ep-row select { font-size:12px; border:1px solid #D4CCC0; border-radius:6px; padding:5px 8px; background:white; color:#1C1A17; cursor:pointer; flex:1; font-family:'Inter',sans-serif; }
+.ep-val { font-size:11px; color:#9A7B4F; min-width:34px; text-align:right; font-weight:500; }
+
+/* text editor fields */
+.ep-text-group { margin-bottom:14px; }
+.ep-text-label { font-size:11px; color:#9C9690; margin-bottom:5px; letter-spacing:.5px; text-transform:uppercase; }
+.ep-text-input {
+  width:100%; padding:8px 10px; font-size:13px; font-family:'Inter',sans-serif;
+  border:1px solid #D4CCC0; border-radius:8px; color:#1C1A17; background:white;
+  transition:border-color .2s; outline:none;
+}
+.ep-text-input:focus { border-color:#9A7B4F; }
+.ep-text-divider { height:1px; background:#E8E2D8; margin:16px 0; }
+
+.ep-actions { padding:0 16px 20px; flex-shrink:0; }
+.ep-export { width:100%; padding:12px; background:#1C1A17; color:white; border:none; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer; margin-bottom:8px; transition:background .2s; font-family:'Inter',sans-serif; }
+.ep-export:hover { background:#9A7B4F; }
+.ep-reset { width:100%; padding:10px; background:none; color:#9C9690; border:1px solid #E8E2D8; border-radius:8px; font-size:12px; cursor:pointer; transition:all .2s; font-family:'Inter',sans-serif; }
+.ep-reset:hover { border-color:#9A7B4F; color:#9A7B4F; }
+
+/* modal */
+#export-modal { display:none; position:fixed; inset:0; z-index:2000; background:rgba(0,0,0,.5); align-items:center; justify-content:center; }
+#export-modal.show { display:flex; }
+.modal-box { background:white; border-radius:14px; padding:24px; width:90%; max-width:500px; max-height:80vh; display:flex; flex-direction:column; gap:14px; }
+.modal-box h3 { font-size:15px; font-weight:500; color:#1C1A17; font-family:'Inter',sans-serif; }
+.modal-box p { font-size:12px; color:#5C5650; font-family:'Inter',sans-serif; }
+.modal-box textarea { flex:1; min-height:200px; font-size:11px; font-family:monospace; border:1px solid #D4CCC0; border-radius:8px; padding:10px; resize:none; color:#1C1A17; background:#FAF8F4; }
+.modal-actions { display:flex; gap:10px; }
+.btn-copy { flex:1; padding:10px; background:#9A7B4F; color:white; border:none; border-radius:8px; font-size:13px; cursor:pointer; font-family:'Inter',sans-serif; }
+.btn-copy:hover { background:#7A5F38; }
+.btn-close-modal { flex:1; padding:10px; background:none; color:#5C5650; border:1px solid #D4CCC0; border-radius:8px; font-size:13px; cursor:pointer; font-family:'Inter',sans-serif; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo" id="txt-logo">APTA IMOB</div>
+  <div class="tagline" id="txt-tagline">Portal de Empreendimentos</div>
+</div>
+
+<div class="main">
+  <div class="breadcrumb" id="breadcrumb"></div>
+
+  <!-- NÍVEL 1 -->
+  <div class="screen active" id="screen-home">
+    <div class="section-header">
+      <div class="section-label" id="txt-welcome-label">Bem-vindo ao portal</div>
+      <div class="section-title" id="txt-welcome-title">Escolha a construtora</div>
+    </div>
+    <div class="builder-card" onclick="goTo('pride')">
+      <div class="builder-accent"></div>
+      <div class="builder-body">
+        <div>
+          <div class="builder-name" id="txt-b1-name">Construtora Pride</div>
+          <div class="builder-count" id="txt-b1-count">3 empreendimentos disponíveis</div>
+        </div>
+        <div class="builder-arrow">›</div>
+      </div>
+    </div>
+    <div class="builder-card" onclick="goTo('valor-real')">
+      <div class="builder-accent"></div>
+      <div class="builder-body">
+        <div>
+          <div class="builder-name" id="txt-b2-name">Construtora Valor Real</div>
+          <div class="builder-count" id="txt-b2-count">2 empreendimentos disponíveis</div>
+        </div>
+        <div class="builder-arrow">›</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NÍVEL 2 — Pride -->
+  <div class="screen" id="screen-pride">
+    <div class="section-header">
+      <div class="section-label">Construtora Pride</div>
+      <div class="section-title">Empreendimentos</div>
+    </div>
+    <div class="emp-card" onclick="goTo('pride-lumiere')"><div class="emp-info"><div class="emp-name">Lumière Residencial</div><div class="emp-tags"><span class="tag">Paranaguá</span><span class="tag">2 e 3 dorm.</span></div></div><div class="emp-arrow">›</div></div>
+    <div class="emp-card" onclick="goTo('pride-vista')"><div class="emp-info"><div class="emp-name">Vista Alegre Tower</div><div class="emp-tags"><span class="tag">Paranaguá</span><span class="tag">Studios e 1 dorm.</span></div></div><div class="emp-arrow">›</div></div>
+    <div class="emp-card" onclick="goTo('pride-garden')"><div class="emp-info"><div class="emp-name">Garden Square</div><div class="emp-tags"><span class="tag">Antonina</span><span class="tag">Condomínio fechado</span></div></div><div class="emp-arrow">›</div></div>
+  </div>
+
+  <!-- NÍVEL 2 — Valor Real -->
+  <div class="screen" id="screen-valor-real">
+    <div class="section-header">
+      <div class="section-label">Construtora Valor Real</div>
+      <div class="section-title">Empreendimentos</div>
+    </div>
+    <div class="emp-card" onclick="goTo('vr-porto')"><div class="emp-info"><div class="emp-name">Porto Belo Residências</div><div class="emp-tags"><span class="tag">Paranaguá</span><span class="tag">2 dorm.</span></div></div><div class="emp-arrow">›</div></div>
+    <div class="emp-card" onclick="goTo('vr-sol')"><div class="emp-info"><div class="emp-name">Solar das Palmeiras</div><div class="emp-tags"><span class="tag">Pontal do Paraná</span><span class="tag">Casas 3 dorm.</span></div></div><div class="emp-arrow">›</div></div>
+  </div>
+
+  <!-- NÍVEL 3 -->
+  <div class="screen" id="screen-pride-lumiere"><div class="section-header"><div class="section-label">Construtora Pride</div><div class="section-title">Lumière Residencial</div></div><div class="links-grid" id="links-pride-lumiere"></div></div>
+  <div class="screen" id="screen-pride-vista"><div class="section-header"><div class="section-label">Construtora Pride</div><div class="section-title">Vista Alegre Tower</div></div><div class="links-grid" id="links-pride-vista"></div></div>
+  <div class="screen" id="screen-pride-garden"><div class="section-header"><div class="section-label">Construtora Pride</div><div class="section-title">Garden Square</div></div><div class="links-grid" id="links-pride-garden"></div></div>
+  <div class="screen" id="screen-vr-porto"><div class="section-header"><div class="section-label">Construtora Valor Real</div><div class="section-title">Porto Belo Residências</div></div><div class="links-grid" id="links-vr-porto"></div></div>
+  <div class="screen" id="screen-vr-sol"><div class="section-header"><div class="section-label">Construtora Valor Real</div><div class="section-title">Solar das Palmeiras</div></div><div class="links-grid" id="links-vr-sol"></div></div>
+</div>
+
+<!-- EDITOR TOGGLE -->
+<button id="editor-toggle" onclick="toggleEditor()">✏️ Personalizar</button>
+
+<!-- EDITOR PANEL -->
+<div id="editor-panel">
+  <div class="ep-head">
+    <h2>Personalizar</h2>
+    <button class="ep-close" onclick="toggleEditor()">✕</button>
+  </div>
+
+  <div class="ep-tabs">
+    <button class="ep-tab active" onclick="switchTab('cores')">Cores</button>
+    <button class="ep-tab" onclick="switchTab('tipo')">Tipo</button>
+    <button class="ep-tab" onclick="switchTab('espaco')">Espaços</button>
+    <button class="ep-tab" onclick="switchTab('textos')">Textos</button>
+  </div>
+
+  <div class="ep-body">
+
+    <!-- ABA: CORES -->
+    <div class="ep-pane active" id="pane-cores">
+      <div class="ep-section">
+        <div class="ep-section-title">Cores gerais</div>
+        <div class="ep-row"><span class="ep-label">Fundo da página</span><input type="color" id="c-bg" value="#E8E2D8" oninput="setVar('--bg',this.value)"></div>
+        <div class="ep-row"><span class="ep-label">Fundo dos cards</span><input type="color" id="c-card" value="#FFFFFF" oninput="setVar('--card-bg',this.value)"></div>
+        <div class="ep-row"><span class="ep-label">Cor de destaque</span><input type="color" id="c-accent" value="#9A7B4F" oninput="applyAccent(this.value)"></div>
+        <div class="ep-row"><span class="ep-label">Texto principal</span><input type="color" id="c-text" value="#1C1A17" oninput="setVar('--text',this.value)"></div>
+        <div class="ep-row"><span class="ep-label">Texto secundário</span><input type="color" id="c-text-mid" value="#5C5650" oninput="setVar('--text-mid',this.value)"></div>
+        <div class="ep-row"><span class="ep-label">Texto suave</span><input type="color" id="c-text-light" value="#9C9690" oninput="setVar('--text-light',this.value)"></div>
+        <div class="ep-row"><span class="ep-label">Bordas</span><input type="color" id="c-border" value="#D4CCC0" oninput="setVar('--border',this.value)"></div>
+      </div>
+      <div class="ep-section">
+        <div class="ep-section-title">Header</div>
+        <div class="ep-row"><span class="ep-label">Fundo</span><input type="color" id="c-header" value="#1C1A17" oninput="setVar('--header-bg',this.value)"></div>
+        <div class="ep-row"><span class="ep-label">Texto</span><input type="color" id="c-header-text" value="#FAF8F4" oninput="setVar('--header-text',this.value)"></div>
+      </div>
+    </div>
+
+    <!-- ABA: TIPOGRAFIA -->
+    <div class="ep-pane" id="pane-tipo">
+      <div class="ep-section">
+        <div class="ep-section-title">Fontes</div>
+        <div class="ep-row"><span class="ep-label">Títulos</span>
+          <select id="f-title" onchange="setVar('--title-font',this.value)">
+            <option value="'Cormorant Garamond', serif" selected>Cormorant Garamond</option>
+            <option value="'Playfair Display', serif">Playfair Display</option>
+            <option value="'Merriweather', serif">Merriweather</option>
+            <option value="'Montserrat', sans-serif">Montserrat</option>
+            <option value="'Raleway', sans-serif">Raleway</option>
+            <option value="'Poppins', sans-serif">Poppins</option>
+            <option value="'Lato', sans-serif">Lato</option>
+            <option value="'Inter', sans-serif">Inter</option>
+          </select>
+        </div>
+        <div class="ep-row"><span class="ep-label">Corpo</span>
+          <select id="f-body" onchange="setVar('--body-font',this.value)">
+            <option value="'Inter', sans-serif" selected>Inter</option>
+            <option value="'Lato', sans-serif">Lato</option>
+            <option value="'Poppins', sans-serif">Poppins</option>
+            <option value="'Montserrat', sans-serif">Montserrat</option>
+            <option value="'Raleway', sans-serif">Raleway</option>
+            <option value="'Merriweather', serif">Merriweather</option>
+          </select>
+        </div>
+      </div>
+      <div class="ep-section">
+        <div class="ep-section-title">Tamanhos</div>
+        <div class="ep-row"><span class="ep-label">Logo</span><input type="range" min="18" max="48" value="30" oninput="setSizePx('.logo','font-size',this.value,'v-logo')"><span class="ep-val" id="v-logo">30px</span></div>
+        <div class="ep-row"><span class="ep-label">Título seção</span><input type="range" min="16" max="40" value="26" oninput="setSizeAll('.section-title','font-size',this.value,'v-stitle')"><span class="ep-val" id="v-stitle">26px</span></div>
+        <div class="ep-row"><span class="ep-label">Nome card</span><input type="range" min="14" max="28" value="20" oninput="setSizeAll('.builder-name,.emp-name','font-size',this.value,'v-cname')"><span class="ep-val" id="v-cname">20px</span></div>
+        <div class="ep-row"><span class="ep-label">Link name</span><input type="range" min="11" max="20" value="14" oninput="setSizeAll('.link-name','font-size',this.value,'v-lname')"><span class="ep-val" id="v-lname">14px</span></div>
+      </div>
+    </div>
+
+    <!-- ABA: ESPAÇOS -->
+    <div class="ep-pane" id="pane-espaco">
+      <div class="ep-section">
+        <div class="ep-section-title">Cards</div>
+        <div class="ep-row"><span class="ep-label">Arredondamento</span><input type="range" min="0" max="28" value="14" oninput="setVarPx('--radius',this.value,'v-radius')"><span class="ep-val" id="v-radius">14px</span></div>
+        <div class="ep-row"><span class="ep-label">Padding interno</span><input type="range" min="8" max="36" value="20" oninput="setVarPx('--card-pad',this.value,'v-cpad')"><span class="ep-val" id="v-cpad">20px</span></div>
+        <div class="ep-row"><span class="ep-label">Espaço entre cards</span><input type="range" min="4" max="32" value="14" oninput="setVarPx('--card-gap',this.value,'v-cgap')"><span class="ep-val" id="v-cgap">14px</span></div>
+      </div>
+      <div class="ep-section">
+        <div class="ep-section-title">Página</div>
+        <div class="ep-row"><span class="ep-label">Padding header</span><input type="range" min="12" max="64" value="36" oninput="setVarPx('--header-pad',this.value,'v-hpad')"><span class="ep-val" id="v-hpad">36px</span></div>
+        <div class="ep-row"><span class="ep-label">Padding do conteúdo</span><input type="range" min="12" max="64" value="36" oninput="setVarPx('--page-pad',this.value,'v-ppad')"><span class="ep-val" id="v-ppad">36px</span></div>
+      </div>
+    </div>
+
+    <!-- ABA: TEXTOS -->
+    <div class="ep-pane" id="pane-textos">
+      <div class="ep-section">
+        <div class="ep-section-title">Header</div>
+        <div class="ep-text-group">
+          <div class="ep-text-label">Nome da imobiliária</div>
+          <input class="ep-text-input" id="t-logo" value="APTA IMOB" oninput="setTxt('txt-logo',this.value)">
+        </div>
+        <div class="ep-text-group">
+          <div class="ep-text-label">Subtítulo</div>
+          <input class="ep-text-input" id="t-tagline" value="Portal de Empreendimentos" oninput="setTxt('txt-tagline',this.value)">
+        </div>
+      </div>
+
+      <div class="ep-section">
+        <div class="ep-section-title">Página inicial</div>
+        <div class="ep-text-group">
+          <div class="ep-text-label">Label de boas-vindas</div>
+          <input class="ep-text-input" id="t-welcome-label" value="Bem-vindo ao portal" oninput="setTxt('txt-welcome-label',this.value)">
+        </div>
+        <div class="ep-text-group">
+          <div class="ep-text-label">Título da página</div>
+          <input class="ep-text-input" id="t-welcome-title" value="Escolha a construtora" oninput="setTxt('txt-welcome-title',this.value)">
+        </div>
+      </div>
+
+      <div class="ep-section">
+        <div class="ep-section-title">Construtora 1</div>
+        <div class="ep-text-group">
+          <div class="ep-text-label">Nome</div>
+          <input class="ep-text-input" id="t-b1-name" value="Construtora Pride" oninput="setTxt('txt-b1-name',this.value)">
+        </div>
+        <div class="ep-text-group">
+          <div class="ep-text-label">Subtexto</div>
+          <input class="ep-text-input" id="t-b1-count" value="3 empreendimentos disponíveis" oninput="setTxt('txt-b1-count',this.value)">
+        </div>
+      </div>
+
+      <div class="ep-section">
+        <div class="ep-section-title">Construtora 2</div>
+        <div class="ep-text-group">
+          <div class="ep-text-label">Nome</div>
+          <input class="ep-text-input" id="t-b2-name" value="Construtora Valor Real" oninput="setTxt('txt-b2-name',this.value)">
+        </div>
+        <div class="ep-text-group">
+          <div class="ep-text-label">Subtexto</div>
+          <input class="ep-text-input" id="t-b2-count" value="2 empreendimentos disponíveis" oninput="setTxt('txt-b2-count',this.value)">
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /ep-body -->
+
+  <div class="ep-actions">
+    <button class="ep-export" onclick="exportCode()">⬇ Exportar código final</button>
+    <button class="ep-reset" onclick="resetDefaults()">↺ Restaurar padrões</button>
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div id="export-modal">
+  <div class="modal-box">
+    <h3>Código HTML exportado</h3>
+    <p>Copie tudo abaixo e salve como <strong>index.html</strong> para publicar no GitHub Pages.</p>
+    <textarea id="export-text" readonly></textarea>
+    <div class="modal-actions">
+      <button class="btn-copy" onclick="copyCode()">Copiar tudo</button>
+      <button class="btn-close-modal" onclick="closeModal()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DADOS ──────────────────────────────────────────────────
+const links = {
+  'pride-lumiere': [
+    {icon:'📷',name:'Book de Imagens',   desc:'Fotos e renders do empreendimento',href:'https://exemplo.com/lumiere-fotos'},
+    {icon:'💰',name:'Tabela de Preços',  desc:'Unidades disponíveis e valores',   href:'https://exemplo.com/lumiere-precos'},
+    {icon:'📄',name:'Memorial Descritivo',desc:'Especificações técnicas',          href:'https://exemplo.com/lumiere-memorial'},
+    {icon:'📍',name:'Localização',       desc:'Ver no mapa',                       href:'https://maps.google.com'},
+    {icon:'💬',name:'Falar com Corretor',desc:'WhatsApp direto',                  href:'https://wa.me/5541999999999'},
+  ],
+  'pride-vista': [
+    {icon:'📷',name:'Book de Imagens',   desc:'Fotos e renders do empreendimento',href:'https://exemplo.com/vista-fotos'},
+    {icon:'💰',name:'Tabela de Preços',  desc:'Unidades disponíveis e valores',   href:'https://exemplo.com/vista-precos'},
+    {icon:'📄',name:'Memorial Descritivo',desc:'Especificações técnicas',          href:'https://exemplo.com/vista-memorial'},
+    {icon:'📍',name:'Localização',       desc:'Ver no mapa',                       href:'https://maps.google.com'},
+    {icon:'💬',name:'Falar com Corretor',desc:'WhatsApp direto',                  href:'https://wa.me/5541999999999'},
+  ],
+  'pride-garden': [
+    {icon:'📷',name:'Book de Imagens',   desc:'Fotos e renders do empreendimento',href:'https://exemplo.com/garden-fotos'},
+    {icon:'💰',name:'Tabela de Preços',  desc:'Unidades disponíveis e valores',   href:'https://exemplo.com/garden-precos'},
+    {icon:'📄',name:'Memorial Descritivo',desc:'Especificações técnicas',          href:'https://exemplo.com/garden-memorial'},
+    {icon:'📍',name:'Localização',       desc:'Ver no mapa',                       href:'https://maps.google.com'},
+    {icon:'💬',name:'Falar com Corretor',desc:'WhatsApp direto',                  href:'https://wa.me/5541999999999'},
+  ],
+  'vr-porto': [
+    {icon:'📷',name:'Book de Imagens',   desc:'Fotos e renders do empreendimento',href:'https://exemplo.com/porto-fotos'},
+    {icon:'💰',name:'Tabela de Preços',  desc:'Unidades disponíveis e valores',   href:'https://exemplo.com/porto-precos'},
+    {icon:'📄',name:'Memorial Descritivo',desc:'Especificações técnicas',          href:'https://exemplo.com/porto-memorial'},
+    {icon:'📍',name:'Localização',       desc:'Ver no mapa',                       href:'https://maps.google.com'},
+    {icon:'💬',name:'Falar com Corretor',desc:'WhatsApp direto',                  href:'https://wa.me/5541999999999'},
+  ],
+  'vr-sol': [
+    {icon:'📷',name:'Book de Imagens',   desc:'Fotos e renders do empreendimento',href:'https://exemplo.com/solar-fotos'},
+    {icon:'💰',name:'Tabela de Preços',  desc:'Unidades disponíveis e valores',   href:'https://exemplo.com/solar-precos'},
+    {icon:'📄',name:'Memorial Descritivo',desc:'Especificações técnicas',          href:'https://exemplo.com/solar-memorial'},
+    {icon:'📍',name:'Localização',       desc:'Ver no mapa',                       href:'https://maps.google.com'},
+    {icon:'💬',name:'Falar com Corretor',desc:'WhatsApp direto',                  href:'https://wa.me/5541999999999'},
+  ],
+};
+
+const labels = {
+  home:'Início', pride:'Construtora Pride', 'valor-real':'Construtora Valor Real',
+  'pride-lumiere':'Lumière Residencial','pride-vista':'Vista Alegre Tower',
+  'pride-garden':'Garden Square','vr-porto':'Porto Belo Residências','vr-sol':'Solar das Palmeiras',
+};
+
+const navHistory = ['home'];
+
+function renderLinks(key) {
+  const el = document.getElementById('links-'+key);
+  if (!el || el.innerHTML.trim()) return;
+  (links[key]||[]).forEach(l => {
+    el.innerHTML += `<a class="link-card" href="${l.href}" target="_blank" rel="noopener">
+      <div class="link-icon-wrap">${l.icon}</div>
+      <div class="link-info"><div class="link-name">${l.name}</div><div class="link-desc">${l.desc}</div></div>
+      <div class="link-ext">↗</div></a>`;
+  });
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('screen-'+id);
+  if (el) { el.classList.remove('active'); void el.offsetWidth; el.classList.add('active'); }
+  if (links[id]) renderLinks(id);
+  updateBreadcrumb();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function goTo(id) { navHistory.push(id); showScreen(id); }
+function goBack(i) { navHistory.splice(i+1); showScreen(navHistory[navHistory.length-1]); }
+
+function updateBreadcrumb() {
+  const bc = document.getElementById('breadcrumb');
+  if (navHistory.length <= 1) { bc.innerHTML=''; return; }
+  bc.innerHTML = navHistory.map((h,i) =>
+    i === navHistory.length-1
+      ? `<span class="bc-current">${labels[h]||h}</span>`
+      : `<span class="bc-link" onclick="goBack(${i})">${labels[h]||h}</span>`
+  ).join('<span class="bc-sep"> › </span>');
+}
+
+// ── EDITOR ──────────────────────────────────────────────────
+function toggleEditor() { document.getElementById('editor-panel').classList.toggle('open'); }
+
+function switchTab(name) {
+  document.querySelectorAll('.ep-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.ep-pane').forEach(p => p.classList.remove('active'));
+  document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
+  document.getElementById('pane-'+name).classList.add('active');
+}
+
+function setVar(v, val) { document.documentElement.style.setProperty(v, val); }
+
+function setVarPx(v, val, labelId) {
+  document.documentElement.style.setProperty(v, val+'px');
+  document.getElementById(labelId).textContent = val+'px';
+}
+
+function setSizePx(sel, prop, val, labelId) {
+  document.querySelectorAll(sel).forEach(el => el.style[prop] = val+'px');
+  document.getElementById(labelId).textContent = val+'px';
+}
+
+function setSizeAll(sel, prop, val, labelId) {
+  sel.split(',').forEach(s => document.querySelectorAll(s.trim()).forEach(el => el.style[prop] = val+'px'));
+  document.getElementById(labelId).textContent = val+'px';
+}
+
+function setTxt(elId, val) {
+  const el = document.getElementById(elId);
+  if (el) el.textContent = val;
+}
+
+function applyAccent(value) {
+  setVar('--accent', value);
+  const r=parseInt(value.slice(1,3),16), g=parseInt(value.slice(3,5),16), b=parseInt(value.slice(5,7),16);
+  const darken = v => Math.max(0,Math.round(v*.8)).toString(16).padStart(2,'0');
+  const lighten = v => Math.min(255,Math.round(v+(255-v)*.75)).toString(16).padStart(2,'0');
+  setVar('--accent-hover', `#${darken(r)}${darken(g)}${darken(b)}`);
+  setVar('--accent-pale', `#${lighten(r)}${lighten(g)}${lighten(b)}`);
+}
+
+function resetDefaults() {
+  const dv = {'--bg':'#E8E2D8','--card-bg':'#FFFFFF','--accent':'#9A7B4F','--accent-pale':'#F0E8D8',
+    '--header-bg':'#1C1A17','--header-text':'#FAF8F4','--text':'#1C1A17','--text-mid':'#5C5650',
+    '--text-light':'#9C9690','--border':'#D4CCC0','--radius':'14px','--card-pad':'20px',
+    '--card-gap':'14px','--header-pad':'36px','--page-pad':'36px',
+    '--body-font':"'Inter', sans-serif",'--title-font':"'Cormorant Garamond', serif"};
+  Object.entries(dv).forEach(([k,v]) => setVar(k,v));
+
+  document.querySelector('.logo').style.fontSize='30px';
+  document.querySelectorAll('.section-title').forEach(el=>el.style.fontSize='26px');
+  document.querySelectorAll('.builder-name,.emp-name').forEach(el=>el.style.fontSize='');
+  document.querySelectorAll('.link-name').forEach(el=>el.style.fontSize='');
+
+  [['c-bg','#E8E2D8'],['c-card','#FFFFFF'],['c-accent','#9A7B4F'],['c-header','#1C1A17'],
+   ['c-header-text','#FAF8F4'],['c-text','#1C1A17'],['c-text-mid','#5C5650'],
+   ['c-text-light','#9C9690'],['c-border','#D4CCC0']].forEach(([id,v])=>{
+    const el=document.getElementById(id); if(el) el.value=v;
+  });
+
+  document.getElementById('f-title').value="'Cormorant Garamond', serif";
+  document.getElementById('f-body').value="'Inter', sans-serif";
+
+  [['v-logo','30'],['v-stitle','26'],['v-cname','20'],['v-lname','14'],
+   ['v-radius','14'],['v-cpad','20'],['v-cgap','14'],['v-hpad','36'],['v-ppad','36']].forEach(([id,v])=>{
+    const el=document.getElementById(id); if(el) el.textContent=v+'px';
+  });
+
+  // reset text fields
+  const texts = {'t-logo':'APTA IMOB','t-tagline':'Portal de Empreendimentos',
+    't-welcome-label':'Bem-vindo ao portal','t-welcome-title':'Escolha a construtora',
+    't-b1-name':'Construtora Pride','t-b1-count':'3 empreendimentos disponíveis',
+    't-b2-name':'Construtora Valor Real','t-b2-count':'2 empreendimentos disponíveis'};
+  Object.entries(texts).forEach(([inputId, val]) => {
+    const inp=document.getElementById(inputId); if(inp) inp.value=val;
+    const targetId=inputId.replace('t-','txt-');
+    const target=document.getElementById(targetId); if(target) target.textContent=val;
+  });
+}
+
+function exportCode() {
+  const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+  document.getElementById('export-text').value = html;
+  document.getElementById('export-modal').classList.add('show');
+}
+
+function copyCode() {
+  const ta=document.getElementById('export-text'); ta.select();
+  document.execCommand('copy');
+  const btn=document.querySelector('.btn-copy');
+  btn.textContent='✓ Copiado!';
+  setTimeout(()=>btn.textContent='Copiar tudo',2000);
+}
+
+function closeModal() { document.getElementById('export-modal').classList.remove('show'); }
+
+updateBreadcrumb();
+</script>
+</body>
+</html>
