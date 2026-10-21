@@ -3,9 +3,6 @@ name: Publish Apta to Hostinger
 on:
   push:
     branches: [main]
-    paths:
-      - index.html
-      - .github/workflows/deploy-hostinger.yml
   workflow_dispatch:
 
 permissions:
@@ -55,10 +52,14 @@ jobs:
           ssh -T -p 65002 -i "$HOME/.ssh/apta_deploy" \
             -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
             -o UserKnownHostsFile="$HOME/.ssh/apta_known_hosts" -o ConnectTimeout=25 \
-            u200021749@145.223.28.218 "deploy-apta ${REVISION}" < index.html
+            u200021749@145.223.28.218 "deploy-apta ${REVISION}" < index.html | tee deploy-receipt.json
       - name: Verify public HTTPS content
         run: |
           set -euo pipefail
+          if jq -e '.skipped == true' deploy-receipt.json > /dev/null; then
+            echo 'Superseded by a newer main revision; its queued run will publish.'
+            exit 0
+          fi
           for domain in aptaimob.com.br www.aptaimob.com.br; do
             curl --fail --silent --show-error --retry 3 --max-time 60 \
               "https://${domain}/?apta_deploy=${GITHUB_SHA}" --output live.html
