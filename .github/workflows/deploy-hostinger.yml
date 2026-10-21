@@ -1,0 +1,66 @@
+name: Publish Apta to Hostinger
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - index.html
+      - .github/workflows/deploy-hostinger.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apta-hostinger-production
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - name: Download the exact committed catalog
+        env:
+          REVISION: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --retry 3 --max-time 60 \
+            "https://raw.githubusercontent.com/makeit-construtora/apta-imob/${REVISION}/index.html" \
+            --output index.html
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import vm from 'node:vm';
+          const html = fs.readFileSync('index.html', 'utf8');
+          if (!html.includes('</html>') || !html.includes('APTA')) throw new Error('Invalid catalog');
+          let count = 0;
+          for (const [, script] of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)) {
+            new vm.Script(script, { filename: `inline-script-${++count}.js` });
+          }
+          console.log(`Validated ${count} inline scripts`);
+          JS
+      - name: Publish through restricted SSH key
+        env:
+          DEPLOY_KEY: ${{ secrets.HOSTINGER_APTA_DEPLOY_KEY }}
+          REVISION: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_KEY" > "$HOME/.ssh/apta_deploy"
+          trap 'rm -f "$HOME/.ssh/apta_deploy"' EXIT
+          printf '%s\n' '[145.223.28.218]:65002 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDc4QoJYdV3lxgHjPmX/qZdXV/a4J0xKr/iR7jUCuy4C' > "$HOME/.ssh/apta_known_hosts"
+          ssh -T -p 65002 -i "$HOME/.ssh/apta_deploy" \
+            -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$HOME/.ssh/apta_known_hosts" -o ConnectTimeout=25 \
+            u200021749@145.223.28.218 "deploy-apta ${REVISION}" < index.html
+      - name: Verify public HTTPS content
+        run: |
+          set -euo pipefail
+          for domain in aptaimob.com.br www.aptaimob.com.br; do
+            curl --fail --silent --show-error --retry 3 --max-time 60 \
+              "https://${domain}/?apta_deploy=${GITHUB_SHA}" --output live.html
+            cmp index.html live.html
+          done
+          sha256sum index.html
