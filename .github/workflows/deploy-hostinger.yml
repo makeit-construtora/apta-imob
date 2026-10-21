@@ -48,8 +48,9 @@ jobs:
           set -euo pipefail
           umask 077
           mkdir -p "$HOME/.ssh"
-          printf '%s\n' "$DEPLOY_KEY" > "$HOME/.ssh/apta_deploy"
+          printf '%s\n' "$DEPLOY_KEY" | tr -d '\r' > "$HOME/.ssh/apta_deploy"
           trap 'rm -f "$HOME/.ssh/apta_deploy"' EXIT
+          ssh-keygen -y -f "$HOME/.ssh/apta_deploy" > /dev/null
           printf '%s\n' '[145.223.28.218]:65002 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDc4QoJYdV3lxgHjPmX/qZdXV/a4J0xKr/iR7jUCuy4C' > "$HOME/.ssh/apta_known_hosts"
           ssh -T -p 65002 -i "$HOME/.ssh/apta_deploy" \
             -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
